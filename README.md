@@ -9,6 +9,12 @@
 - [x] Https proxy
 - [x] Request filters
 
+## Installation
+
+```
+composer require janfish/swooxy -vvv
+```
+
 ## How to use
 
 - Standard mode
