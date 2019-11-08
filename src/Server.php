@@ -25,7 +25,7 @@ class Server
         'worker_num' => 1,
         //            'backlog' => 1000,
         'max_request' => 2000,
-        'buffer_output_size' => 64 * 1024 * 1024, //必须为数字
+        'buffer_output_size' => 12 * 1024 * 1024,
     ];
 
     /**
