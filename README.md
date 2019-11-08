@@ -7,7 +7,7 @@
 
 - [x] Http proxy
 - [x] Https proxy
-- [x] Request filers
+- [x] Request filters
 
 ## How to use
 
