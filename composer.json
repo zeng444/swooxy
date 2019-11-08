@@ -1,0 +1,26 @@
+{
+  "name": "janfish/swooxy",
+  "description": "An HTTP proxy server based on swoole",
+  "license": "MIT",
+  "keywords": [
+    "swoole",
+    "proxy",
+    "http",
+    "https"
+  ],
+  "authors": [
+    {
+      "name": "Robert",
+      "email": "zeng444@163.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.1.0",
+    "ext-swoole": "4.4.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Swooxy\\": "./src/"
+    }
+  }
+}
