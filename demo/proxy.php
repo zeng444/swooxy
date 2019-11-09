@@ -1,7 +1,7 @@
 <?php
 include_once dirname(__DIR__).'/vendor/autoload.php';
-include_once './Filter/rule.php';
-include_once './Filter/Log.php';
+include_once __DIR__.'/Filter/Rule.php';
+include_once __DIR__.'/Filter/Log.php';
 $proxy = new \Swooxy\Server([
     'daemonize' => false,
 ]);
