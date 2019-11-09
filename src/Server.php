@@ -144,7 +144,7 @@ class Server
                 foreach ($this->_filters as $filter) {
                     $filterInstance = new $filter();
                     if (!$filterInstance instanceof FilterInterface) {
-                        throw new \Exception('无效的过滤器');
+                        throw new \Exception('Invalid filter');
                     }
                     if ($filterInstance->run($http) === false) {
                         $server->send($fd, $filterInstance->protocolEndTxt());
@@ -161,13 +161,13 @@ class Server
                 $this->_client[$fd] = $this->createClient($tcpMode);
                 if ($method == 'CONNECT') {
                     $this->_client[$fd]->on("connect", function (\Swoole\Client $cli) use ($fd) {
-                        $this->log("隧道模式-连接成功!");
+                        $this->log("Tunnel - Connection established");
                         //告诉客户端准备就绪，可以继续发包
                         $this->_server->send($fd, "HTTP/1.1 200 Connection Established\r\n\r\n");
                     });
                 } else {
                     $this->_client[$fd]->on("connect", function (\Swoole\Client $cli) use ($buffer) {
-                        $this->log("正常模式-连接成功!");
+                        $this->log("Connection established");
                         //直接转发数据
                         $cli->send($buffer);
                     });
