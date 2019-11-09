@@ -22,7 +22,7 @@ class Server
     private $_options = [
         'daemonize' => false,
         'reactor_num' => 1,
-        'worker_num' => 1,
+        'worker_num' => 10,
         //            'backlog' => 1000,
         'max_request' => 2000,
         'buffer_output_size' => 12 * 1024 * 1024,
@@ -136,7 +136,6 @@ class Server
     public function onReceive()
     {
         $this->_server->on('receive', function (\Swoole\Server $server, $fd, $reactor_id, $buffer) {
-
             //判断是否为新连接
             if (!isset($this->_client[$fd])) {
 
