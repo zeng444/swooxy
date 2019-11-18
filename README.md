@@ -24,6 +24,13 @@ $proxy = new \Swooxy\Server();
 $proxy->listen();
 ```
 
+- Use coroutine client
+
+```php
+$proxy = new \Swooxy\Coroutine\Server();
+$proxy->listen();
+```
+
 - Define host and port
 
 ```php
