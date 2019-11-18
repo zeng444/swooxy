@@ -6,7 +6,7 @@ $proxy = new \Swooxy\Server([
     'daemonize' => false,
 ]);
 $proxy->setFilter([
-    Rule::class, //记录规则
+//    Rule::class, //记录规则
     Log::class, //写日志
 ]);
 $proxy->listen('0.0.0.0', 10080);

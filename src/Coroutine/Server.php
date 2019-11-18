@@ -1,6 +1,6 @@
 <?php
 
-namespace Swooxy;
+namespace Swooxy\Coroutine;
 
 use Swooxy\Filter\FilterInterface;
 use Swooxy\Protocol\Http;
@@ -52,6 +52,7 @@ class Server
 
     const CLIENT_TIMEOUT = 60;
 
+
     /**
      * Server constructor.
      * @param array $options
@@ -92,12 +93,21 @@ class Server
      * Author:Robert
      *
      * @param $tcpMode
-     * @return \Swoole\Client
+     * @return \Swoole\Coroutine\Client
      */
     public function createClient($tcpMode)
     {
-        return new \Swoole\Client($tcpMode, SWOOLE_SOCK_ASYNC);
+        $client = new \Swoole\Coroutine\Client($tcpMode);
+        $client->set([
+            'timeout' => self::CLIENT_TIMEOUT,
+            'connect_timeout' => 3,
+            'write_timeout' => self::CLIENT_TIMEOUT,
+            'read_timeout' => self::CLIENT_TIMEOUT,
+        ]);
+        return $client;
+        //        return new \Swoole\Client($tcpMode, SWOOLE_SOCK_ASYNC);
     }
+
 
     /**
      * Author:Robert
@@ -133,13 +143,29 @@ class Server
     /**
      * Author:Robert
      *
+     * @param $fd
+     * @param $host
+     * @param $port
+     * @return bool
+     */
+    public function connect($fd, $host, $port)
+    {
+        if (!$this->_client[$fd]->connect($host, $port)) {
+            $this->log("Connection failed [{$this->_client[$fd]->errCode}]");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Author:Robert
+     *
      */
     public function onReceive()
     {
         $this->_server->on('receive', function (\Swoole\Server $server, $fd, $reactor_id, $buffer) {
             //判断是否为新连接
             if (!isset($this->_client[$fd])) {
-
                 $http = new Http($buffer);
                 //安装filer
                 foreach ($this->_filters as $filter) {
@@ -152,7 +178,6 @@ class Server
                         return $server->close($fd);
                     }
                 }
-
                 //识别代理
                 $host = $http->getHost();
                 $method = $http->getMethod();
@@ -160,38 +185,27 @@ class Server
                 //ipv4/v6处理
                 $tcpMode = $http->isIpv6() ? SWOOLE_SOCK_TCP6 : SWOOLE_SOCK_TCP;
                 $this->_client[$fd] = $this->createClient($tcpMode);
-                if ($method == 'CONNECT') {
-                    $this->_client[$fd]->on("connect", function (\Swoole\Client $cli) use ($fd) {
+                if ($this->connect($fd, $host, $port)) {
+                    if ($method == 'CONNECT') {
                         $this->log("Tunnel - Connection established");
                         //告诉客户端准备就绪，可以继续发包
                         $this->_server->send($fd, "HTTP/1.1 200 Connection Established\r\n\r\n");
-                    });
-                } else {
-                    $this->_client[$fd]->on("connect", function (\Swoole\Client $cli) use ($buffer) {
-                        $this->log("Connection established");
-                        //直接转发数据
-                        $cli->send($buffer);
-                    });
-                }
-                $this->_client[$fd]->on("receive", function (\Swoole\Client $cli, $buffer) use ($fd) {
-                    //将收到的数据转发到客户端
-                    if ($this->_server->exist($fd)) {
-                        $this->_server->send($fd, $buffer);
+                    } else {
+                        $this->log("Connection Continue");
+                        $this->_client[$fd]->send($buffer);
+                        if ($this->_server->exist($fd)) {
+                            $this->_server->send($fd, $this->_client[$fd]->recv());
+                        }
                     }
-                });
-                $this->_client[$fd]->on("error", function (\Swoole\Client $cli) use ($fd) {
-                    $this->log("Client {$fd} error");
-                });
-
-                $this->_client[$fd]->on("close", function (\Swoole\Client $cli) use ($fd) {
-                    $this->log("Client {$fd} connection close");
-                });
-
-                $this->_client[$fd]->connect($host, $port, self::CLIENT_TIMEOUT);
+                }
             } else {
                 //已连接，正常转发数据
-                if ($this->_client[$fd]->isConnected()) {
-                    $this->_client[$fd]->send($buffer);
+                $client = $this->_client[$fd];
+                if ($client) {
+                    $client->send($buffer);
+                    if ($this->_server->exist($fd) && $data = $client->recv()) {
+                        $this->_server->send($fd, $data);
+                    }
                 }
             }
         });
